@@ -1,0 +1,19 @@
+{
+  "name": "Undancode Forane - Bible Kalolsavam 2026",
+  "short_name": "Undancode Forane",
+  "description": "Live overall and item-wise results, stage and competition details for Bible Kalolsavam.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f172a" />
+<title>Undancode Forane - Bible Kalolsavam 2026</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="assets/icon.svg" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="appbar">
+  <div class="appbar-main">
+    <img src="assets/forane_logo.png" alt="Undancode Forane crest" class="appbar-logo" />
+    <div class="appbar-titles">
+      <h1 id="eventName">Undancode Forane Bible Kalolsavam - 2026</h1>
+      <p id="eventSubtitle">Live Scoreboard</p>
+    </div>
+    <button id="adminBtn" class="admin-btn" type="button">
+      <span class="admin-btn-icon" aria-hidden="true">&#128273;</span>
+      <span id="adminBtnLabel">Admin</span>
+    </button>
+  </div>
+  <div id="liveBanner" class="live-banner" hidden>
+    <span class="live-dot"></span>
+    <span id="liveMessage"></span>
+    <button id="refreshBtn" class="live-refresh" type="button" aria-label="Refresh results" title="Refresh results">&#8635;</button>
+  </div>
+</header>
+
+<main id="view">
+
+  <!-- ===================== HOME ===================== -->
+  <section class="page" data-page="home">
+    <h2 class="section-title">Live Overall Result <button class="link-btn" type="button" data-goto="scoreboard">Full score table</button></h2>
+    <div id="podium" class="podium"></div>
+
+    <div class="home-columns">
+      <div class="home-column">
+        <h2 class="section-title">
+          Latest Item Results
+          <button class="link-btn" type="button" data-goto="results">View all</button>
+        </h2>
+        <div id="latestResults" class="card-list"></div>
+      </div>
+
+      <div class="home-column">
+        <h2 class="section-title">
+          Stage &amp; Competition Details
+          <button class="link-btn" type="button" data-goto="stages">View all</button>
+        </h2>
+        <div id="homeStages" class="card-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SCOREBOARD TABLE ===================== -->
+  <section class="page" data-page="scoreboard" hidden>
+    <h2 class="section-title">Parish &amp; Unit Scoreboard <button class="link-btn" type="button" data-goto="home">Home</button></h2>
+    <div class="scoreboard-actions">
+      <button class="btn btn-sm" type="button" id="downloadScoreboardBtn">Download CSV</button>
+    </div>
+    <div id="scoreboardTable"></div>
+  </section>
+
+  <!-- ===================== RESULTS ===================== -->
+  <section class="page" data-page="results" hidden>
+    <h2 class="section-title">Individual Item Results</h2>
+    <div class="filters">
+      <input id="resultSearch" class="input" type="search" placeholder="Search item or participant" />
+      <div id="resultCategories" class="result-categories" aria-label="Results by category"></div>
+    </div>
+    <div id="itemResults" class="card-list"></div>
+  </section>
+
+  <!-- ===================== STAGES ===================== -->
+  <section class="page" data-page="stages" hidden>
+    <h2 class="section-title">Stages &amp; Schedule</h2>
+    <div id="stageList" class="card-list"></div>
+  </section>
+
+  <!-- ===================== TEAMS ===================== -->
+  <section class="page" data-page="teams" hidden>
+    <h2 class="section-title">Teams <button id="teamBackBtn" class="link-btn" type="button">All units</button></h2>
+    <div id="teamList" class="card-list"></div>
+    <div id="teamDetail" hidden></div>
+  </section>
+
+  <!-- ===================== PARISHES ===================== -->
+  <section class="page" data-page="stations" hidden>
+    <h2 class="section-title">Parish &amp; Sub-stations</h2>
+    <div id="stationList" class="card-list"></div>
+  </section>
+
+  <!-- ===================== ADMIN ===================== -->
+  <section class="page" data-page="admin" hidden>
+    <button class="btn" type="button" data-goto="home">&larr; Back to home</button>
+
+    <div id="adminLocked">
+      <div class="lock-card">
+        <div class="lock-icon" aria-hidden="true">&#128274;</div>
+        <h2>Admin Login</h2>
+        <p class="muted">Viewing the score board is open to everyone. Sign in to update scores and details.</p>
+        <form id="loginForm" autocomplete="off">
+          <label class="field">
+            <span>Email or username</span>
+            <input id="loginUser" class="input" type="text" value="admin" autocomplete="username" required />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input id="loginPass" class="input" type="password" autocomplete="current-password" required />
+          </label>
+          <p id="loginError" class="error" hidden></p>
+          <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="adminPanel" hidden>
+      <div class="admin-tabs" id="adminTabs">
+        <button class="chip is-active" type="button" data-tab="scores">Scores</button>
+        <button class="chip" type="button" data-tab="items">Items</button>
+        <button class="chip" type="button" data-tab="stagesAdmin">Stages</button>
+        <button class="chip" type="button" data-tab="settings">Settings</button>
+      </div>
+
+      <!-- Scores -->
+      <div class="admin-tab" data-tab="scores">
+        <details class="panel" id="resultEditor">
+          <summary class="editor-summary">Add / Update Result</summary>
+          <form id="resultForm" autocomplete="off">
+            <input type="hidden" id="resultId" />
+            <label class="field"><span>Item</span><select id="resultItem" class="input" required></select></label>
+            <label class="field"><span>Category</span>
+              <select id="resultCategory" class="input" required>
+                <option value="">Select category</option>
+              </select>
+            </label>
+            <div class="field-row">
+              <label class="field"><span>Parish</span><select id="resultParish" class="input" required></select></label>
+              <label class="field"><span>Unit</span><select id="resultUnit" class="input" required></select></label>
+            </div>
+            <label class="field"><span>Participant(s)</span><input id="resultParticipant" class="input" type="text" placeholder="Name" /></label>
+            <div class="field-row">
+              <label class="field"><span>Position</span>
+                <select id="resultPosition" class="input">
+                  <option value="1">1st</option><option value="2">2nd</option>
+                  <option value="3">3rd</option><option value="0">No place</option>
+                </select>
+              </label>
+              <label class="field"><span>Grade</span>
+                <select id="resultGrade" class="input">
+                  <option value="A">A</option><option value="B">B</option>
+                  <option value="C">C</option><option value="D">D</option>
+                  <option value="E">E</option><option value="">—</option>
+                </select>
+              </label>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" type="submit">Save result</button>
+              <button class="btn" type="button" id="resultReset">Clear</button>
+            </div>
+          </form>
+        </details>
+        <div class="panel">
+          <h3>All Results</h3>
+          <div id="adminResultList" class="card-list"></div>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="admin-tab" data-tab="items" hidden>
+        <details class="panel" id="itemEditor">
+          <summary class="editor-summary">Add / Edit Item</summary>
+          <form id="itemForm" autocomplete="off">
+            <input type="hidden" id="itemId" />
+            <label class="field"><span>Item name</span><input id="itemName" class="input" type="text" required /></label>
+            <label class="field"><span>Item name in Malayalam</span><input id="itemNameMl" class="input" type="text" lang="ml" placeholder="മലയാളത്തിൽ പേര്" /></label>
+            <div class="field-row">
+              <label class="field"><span>Type</span>
+                <select id="itemType" class="input"><option value="Single">Single</option><option value="Group">Group</option></select>
+              </label>
+              <label class="field"><span>Category</span><select id="itemCategory" class="input" required></select></label>
+            </div>
+            <div class="field-row">
+              <label class="field"><span>Stage</span><select id="itemStage" class="input"></select></label>
+              <label class="field"><span>Status</span>
+                <select id="itemStatus" class="input">
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Ongoing">Ongoing</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </label>
+            </div>
+            <label class="field"><span>Scheduled time</span><input id="itemTime" class="input" type="datetime-local" /></label>
+            <div class="btn-row">
+              <button class="btn btn-primary" type="submit">Save item</button>
+              <button class="btn" type="button" id="itemReset">Clear</button>
+            </div>
+          </form>
+        </details>
+        <div class="panel"><h3>All Items</h3><div id="adminItemList" class="card-list"></div></div>
+      </div>
+
+      <!-- Stages -->
+      <div class="admin-tab" data-tab="stagesAdmin" hidden>
+        <details class="panel" id="stageEditor">
+          <summary class="editor-summary">Add / Edit Stage</summary>
+          <form id="stageForm" autocomplete="off">
+            <input type="hidden" id="stageId" />
+            <label class="field"><span>Stage name</span><input id="stageName" class="input" type="text" required /></label>
+            <label class="field"><span>Location</span><input id="stageLocation" class="input" type="text" /></label>
+            <div class="field-row">
+              <label class="field"><span>Stage In-charge</span><input id="stageIncharge" class="input" type="text" /></label>
+              <label class="field"><span>Priest-in-charge</span><input id="stagePriestIncharge" class="input" type="text" /></label>
+            </div>
+            <div class="field-row">
+              <label class="field"><span>Competition item</span><select id="stageCompetitionItem" class="input"></select></label>
+              <label class="field"><span>Category</span><select id="stageCompetitionCategory" class="input" disabled></select></label>
+            </div>
+            <div class="field-row">
+              <label class="field"><span>Up Next item</span><select id="stageUpNextItem" class="input"></select></label>
+              <label class="field"><span>Up Next category</span><select id="stageUpNextCategory" class="input" disabled></select></label>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" type="submit">Save stage</button>
+              <button class="btn" type="button" id="stageReset">Clear</button>
+            </div>
+          </form>
+        </details>
+        <div class="panel"><h3>All Stages</h3><div id="adminStageList" class="card-list"></div></div>
+        <div class="panel">
+          <div class="card-head stage-report-header">
+            <h3>Completed Items Report</h3>
+            <button class="btn btn-sm" type="button" id="exportStageReportBtn">Export CSV</button>
+          </div>
+          <div id="stageCompletionReport"></div>
+        </div>
+      </div>
+
+      <!-- Teams -->
+      <div class="admin-tab" data-tab="teamsAdmin" hidden>
+        <div class="panel">
+          <h3>Add / Edit Team</h3>
+          <form id="teamForm" autocomplete="off">
+            <input type="hidden" id="teamId" />
+            <label class="field"><span>Team name</span><input id="teamName" class="input" type="text" required /></label>
+            <div class="field-row">
+              <label class="field"><span>Short code</span><input id="teamShort" class="input" type="text" maxlength="4" /></label>
+              <label class="field"><span>Colour</span><input id="teamColor" class="input input-color" type="color" value="#2563eb" /></label>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" type="submit">Save team</button>
+              <button class="btn" type="button" id="teamReset">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel"><h3>All Teams</h3><div id="adminTeamList" class="card-list"></div></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="admin-tab" data-tab="settings" hidden>
+        <details class="panel" id="eventDetailsEditor">
+          <summary class="editor-summary">Event Details</summary>
+          <form id="settingsForm" autocomplete="off">
+            <label class="field"><span>Event name</span><input id="setName" class="input" type="text" required /></label>
+            <label class="field"><span>Subtitle</span><input id="setSubtitle" class="input" type="text" /></label>
+            <label class="field"><span>Venue</span><input id="setVenue" class="input" type="text" /></label>
+            <label class="field"><span>Dates</span><input id="setDates" class="input" type="text" /></label>
+            <label class="field"><span>Live banner message</span><input id="setLive" class="input" type="text" placeholder="Leave blank to hide" /></label>
+            <button class="btn btn-primary btn-block" type="submit">Save details</button>
+          </form>
+        </details>
+        <details class="panel" id="pointsEditor">
+          <summary class="editor-summary">Points Scheme</summary>
+          <form id="pointsForm" autocomplete="off">
+            <h4>Single item</h4>
+            <div class="field-row"><label class="field"><span>1st place</span><input id="singleFirst" class="input" type="number" min="0" placeholder="10" /></label><label class="field"><span>2nd place</span><input id="singleSecond" class="input" type="number" min="0" placeholder="7" /></label></div>
+            <label class="field"><span>3rd place</span><input id="singleThird" class="input" type="number" min="0" placeholder="5" /></label>
+            <div class="field-row"><label class="field"><span>Grade A</span><input id="singleGradeA" class="input" type="number" min="0" /></label><label class="field"><span>Grade B</span><input id="singleGradeB" class="input" type="number" min="0" /></label></div>
+            <div class="field-row"><label class="field"><span>Grade C</span><input id="singleGradeC" class="input" type="number" min="0" /></label><label class="field"><span>Grade D</span><input id="singleGradeD" class="input" type="number" min="0" /></label></div>
+            <label class="field"><span>Grade E</span><input id="singleGradeE" class="input" type="number" min="0" /></label>
+            <h4>Group item</h4>
+            <div class="field-row"><label class="field"><span>1st place</span><input id="groupFirst" class="input" type="number" min="0" /></label><label class="field"><span>2nd place</span><input id="groupSecond" class="input" type="number" min="0" /></label></div>
+            <label class="field"><span>3rd place</span><input id="groupThird" class="input" type="number" min="0" /></label>
+            <div class="field-row"><label class="field"><span>Grade A</span><input id="groupGradeA" class="input" type="number" min="0" /></label><label class="field"><span>Grade B</span><input id="groupGradeB" class="input" type="number" min="0" /></label></div>
+            <div class="field-row"><label class="field"><span>Grade C</span><input id="groupGradeC" class="input" type="number" min="0" /></label><label class="field"><span>Grade D</span><input id="groupGradeD" class="input" type="number" min="0" /></label></div>
+            <label class="field"><span>Grade E</span><input id="groupGradeE" class="input" type="number" min="0" /></label>
+            <button class="btn btn-primary btn-block" type="submit">Save points scheme</button>
+          </form>
+        </details>
+        <details class="panel" id="passwordEditor">
+          <summary class="editor-summary">Admin Password</summary>
+          <form id="passwordForm" autocomplete="off">
+            <label class="field"><span>Current password</span><input id="pwCurrent" class="input" type="password" required /></label>
+            <label class="field"><span>New password</span><input id="pwNew" class="input" type="password" minlength="4" required /></label>
+            <label class="field"><span>Confirm new password</span><input id="pwConfirm" class="input" type="password" minlength="4" required /></label>
+            <button class="btn btn-primary btn-block" type="submit">Change password</button>
+          </form>
+        </details>
+        <div class="panel">
+          <h3>Data</h3>
+          <div class="btn-row">
+            <button class="btn" type="button" id="exportBtn">Export JSON</button>
+            <button class="btn" type="button" id="importBtn">Import JSON</button>
+            <button class="btn btn-danger" type="button" id="resetDataBtn">Reset to demo data</button>
+          </div>
+          <input id="importFile" type="file" accept="application/json" hidden />
+        </div>
+        <div class="panel">
+          <button class="btn btn-block" type="button" id="logoutBtn">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button class="tab is-active" type="button" data-goto="home"><span aria-hidden="true">&#127968;</span>Home</button>
+  <button class="tab" type="button" data-goto="results"><span aria-hidden="true">&#127941;</span>Results</button>
+  <button class="tab" type="button" data-goto="stages"><span aria-hidden="true">&#127917;</span>Stages</button>
+  <button class="tab" type="button" data-goto="stations"><span aria-hidden="true">&#128205;</span>Parish</button>
+</nav>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="js/config.js"></script>
+<script src="assets/supabase.umd.js"></script>
+<script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
