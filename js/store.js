@@ -66,7 +66,9 @@
         { id: 'stg-0qb8qfh', name: 'Stage 1', location: 'Parish Auditorium', incharge: 'Mr. Sijin Felix', priestInCharge: 'Fr. Robin C. Peter' },
         { id: 'stg-5a9c6w5', name: 'Stage 2', location: 'Sunday School Block', incharge: 'Mr. Anoop', priestInCharge: 'Fr. Sujin' },
         { id: 'stg-l9sdrca', name: 'Stage 3', location: 'Open Ground', incharge: 'Mr. Binu Raj', priestInCharge: 'Fr. Sebastian' },
-        { id: 'stg-4f7c2a1', name: 'Stage 4', location: '', incharge: 'Mrs. Nisha Manivila', priestInCharge: 'Fr. Thomas Joosa O.Praem' }
+        { id: 'stg-4f7c2a1', name: 'Stage 4', location: '', incharge: 'Mrs. Nisha Manivila', priestInCharge: 'Fr. Thomas Joosa O.Praem' },
+        { id: 'stg-5e1d8b3', name: 'Stage 5', location: '', incharge: '', priestInCharge: '' },
+        { id: 'stg-6a2f9c4', name: 'Stage 6', location: '', incharge: '', priestInCharge: '' }
       ],
       items: [
         { id: 'rec-zvpq4j4', code: 'A', name: 'Light Music (Male)', nameMl: 'ലളിതഗാനം (പുരുഷൻ)', type: 'Single', section: 'Junior', categories: ['Junior', 'Senior', 'Super Senior', 'Teachers'], stageId: '', time: '', status: 'Upcoming' },
@@ -194,9 +196,79 @@
     }
   }
 
+  function ensureExtraStages() {
+    if (!data || !Array.isArray(data.stages) || data.stageSetupVersion >= 3) return false;
+    seed().stages.slice(4).forEach(function (defaultStage) {
+      var exists = data.stages.some(function (stage) { return stage.name === defaultStage.name; });
+      if (!exists) data.stages.push(defaultStage);
+    });
+    data.stageSetupVersion = 3;
+    return true;
+  }
+
+  var MALAYALAM_NAMES = {
+    'undencode': 'ഉണ്ടൻകോട്', 'vencode': 'വെൻകോട്', 'anappara': 'ആനപ്പാറ', 'adeekkalam': 'അടീക്കലം',
+    'kandamthitta': 'കണ്ടംതിട്ട', 'kurichi': 'കുറിച്ചി', 'kuttamala': 'കുട്ടമല', 'kiliyoor': 'കിളിയൂർ',
+    'kallimoodu': 'കള്ളിമൂട്', 'karimbumannadi': 'കരിമ്പുമണ്ണടി', 'kurishumala': 'കുരിശുമല',
+    'kollakonam': 'കൊല്ലകോണം', 'koottappu': 'കൂട്ടപ്പു', 'manivila': 'മണിവിള', 'kadayivila': 'കടയിവിള',
+    'nediyamcode': 'നെടിയംകോട്', 'manchavilaakam': 'മഞ്ചവിളാകം', 'panachamoodu': 'പനച്ചമൂട്',
+    'paravila': 'പാറവിള', 'thresyapuram': 'ത്രേസ്യാപുരം', 'karakkonam': 'കാരക്കോണം',
+    'kaivankala': 'കൈവൻകാല', 'vazhichal': 'വാഴിച്ചൽ', 'chettikunnu': 'ചെട്ടിക്കുന്ന്',
+    'perekkonam': 'പേരെക്കോണം', 'tholikkottukonam': 'തൊളിക്കോട്ടുകോണം', 'mullilavuvila': 'മുള്ളിലവുവിള'
+  };
+  var MALAYALAM_EVENT_NAME = 'ഉണ്ടൻകോട് ഫെറോന ബൈബിൾ കലോത്സവം - 2026';
+
+  function malayalamName(name) {
+    var key = String(name || '').trim().toLowerCase();
+    return MALAYALAM_NAMES[key] || name;
+  }
+
+  var RENAMED_MALAYALAM_NAMES = { 'തോലിക്കോട്ടുകോണം': 'തൊളിക്കോട്ടുകോണം' };
+
+  function renameMalayalamNames() {
+    var changed = false;
+    function fix(record, field) {
+      var next = RENAMED_MALAYALAM_NAMES[record[field]];
+      if (next) { record[field] = next; changed = true; }
+    }
+    (Array.isArray(data.stations) ? data.stations : []).forEach(function (station) {
+      fix(station, 'parish'); fix(station, 'substation'); fix(station, 'name');
+    });
+    (Array.isArray(data.results) ? data.results : []).forEach(function (result) {
+      fix(result, 'parish'); fix(result, 'unit');
+    });
+    return changed;
+  }
+
+  function ensureMalayalamNames() {
+    var fixedSpelling = false;
+    if (data && data.settings && data.settings.eventName === 'ഉണ്ടൻകോട് ഫൊറോനാ ബൈബിൾ കലോത്സവം - 2026') {
+      data.settings.eventName = MALAYALAM_EVENT_NAME;
+      fixedSpelling = true;
+    }
+    if (data && renameMalayalamNames()) fixedSpelling = true;
+    if (!data || data.malayalamNamesVersion >= 1) return fixedSpelling;
+    (Array.isArray(data.stations) ? data.stations : []).forEach(function (station) {
+      station.parish = malayalamName(station.parish);
+      if (station.substation) station.substation = malayalamName(station.substation);
+      if (station.name) station.name = malayalamName(station.name);
+    });
+    (Array.isArray(data.results) ? data.results : []).forEach(function (result) {
+      if (result.parish) result.parish = malayalamName(result.parish);
+      if (result.unit) result.unit = malayalamName(result.unit);
+    });
+    if (data.settings && data.settings.eventName === 'Undancode Forane Bible Kalolsavam - 2026') {
+      data.settings.eventName = MALAYALAM_EVENT_NAME;
+    }
+    data.malayalamNamesVersion = 1;
+    return true;
+  }
+
   function applyRemoteState(remoteData) {
     if (!remoteData || typeof remoteData !== 'object') return;
     data = remoteData;
+    ensureExtraStages();
+    ensureMalayalamNames();
     persistLocal();
     global.dispatchEvent(new Event('kalolsavam-remote-update'));
   }
@@ -308,7 +380,7 @@
       data.stations = seed().stations;
       save();
     }
-    if (data.stageSetupVersion !== 2) {
+    if (!(data.stageSetupVersion >= 2)) {
       var defaultStages = seed().stages;
       if (!Array.isArray(data.stages)) {
         data.stages = defaultStages;
@@ -330,6 +402,7 @@
       data.stageSetupVersion = 2;
       save();
     }
+    if (ensureExtraStages()) save();
     var defaultPoints = seed().settings.points;
     var configuredPoints = data.settings.points || {};
     var pointsChanged = false;
@@ -352,6 +425,7 @@
       data.settings.subtitle = 'Live Scoreboard';
       save();
     }
+    if (ensureMalayalamNames()) save();
     if (data.settings.liveMessage === 'Results are being updated live from the stages.') {
       data.settings.liveMessage = 'Live';
       save();
@@ -478,6 +552,7 @@
       }).sort(function (a, b) { return a.points - b.points || a.unit.localeCompare(b.unit); });
       return { parish: parish.parish, total: parish.total, units: units };
     }).sort(function (a, b) { return b.total - a.total || a.parish.localeCompare(b.parish); });
+    if (!list.some(function (row) { return row.total > 0; })) return [];
     var rank = 0, previousTotal = null;
     list.forEach(function (row, index) {
       if (previousTotal === null || row.total !== previousTotal) {

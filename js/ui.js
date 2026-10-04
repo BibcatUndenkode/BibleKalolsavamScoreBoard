@@ -125,13 +125,13 @@
   /* ---------------- Home ---------------- */
   function renderHome() {
     var list = Store.parishStandings();
-    var top = list.slice(0, 3);
+    var top = list.filter(function (row) { return row.total > 0; }).slice(0, 3);
     var order = [top[1], top[0], top[2]];
     el('podium').innerHTML = top.length
       ? order.map(function (row) {
           if (!row) return '<div class="podium-item" data-place="0"></div>';
           var unitBoxes = row.units.map(function (unit) {
-            return '<div class="parish-unit-box"><span>' + esc(unit.unit) + '</span><strong>' + unit.points + '</strong></div>';
+            return '<div class="parish-unit-box"><button type="button" class="parish-unit-name" aria-expanded="false" title="' + esc(unit.unit) + '">' + esc(unit.unit) + '</button><strong>' + unit.points + '</strong></div>';
           }).join('');
           return '<div class="podium-item parish-card" data-place="' + row.rank + '">' +
             '<div class="rank">' + (MEDALS[row.rank] || row.rank) + '</div>' +
@@ -140,6 +140,11 @@
             '<div class="parish-score-boxes">' + unitBoxes + '</div></div>';
         }).join('')
       : '';
+    el('podium').onclick = function (event) {
+      var button = event.target.closest('.parish-unit-name');
+      if (!button) return;
+      button.setAttribute('aria-expanded', button.classList.toggle('is-expanded') ? 'true' : 'false');
+    };
 
     var recentResults = Store.data.results.slice().sort(function (a, b) {
       return (b.at || 0) - (a.at || 0);
@@ -520,6 +525,11 @@
     rows.forEach(function (row) {
       parishTotals[row.parish] = (parishTotals[row.parish] || 0) + row.total;
     });
+    var hasAnyScores = rows.some(function (row) { return row.total > 0; });
+    if (!hasAnyScores) {
+      el('scoreboardTable').innerHTML = emptyState('Parish and unit scores will appear here once configured.');
+      return;
+    }
     rows.sort(function (a, b) {
       return parishTotals[b.parish] - parishTotals[a.parish] ||
         a.parish.localeCompare(b.parish) || a.unitOrder - b.unitOrder || a.unit.localeCompare(b.unit);
@@ -530,43 +540,50 @@
     });
     var renderedParishes = {};
 
-    var table = rows.length
-      ? '<div class="scoreboard-scroll" role="region" aria-label="Parish and unit score table" tabindex="0">' +
-        '<table class="scoreboard-table" aria-label="Score by parish, unit, competition and category">' +
-          '<thead><tr><th class="scoreboard-parish" scope="col" rowspan="2">Parish</th>' +
-            '<th class="scoreboard-unit" scope="col" rowspan="2">Unit</th>' +
-            groups.map(function (group) {
-              return '<th class="scoreboard-item-group scoreboard-item-end" scope="colgroup" colspan="' + group.columns.length + '">' + esc(group.name) + '</th>';
-            }).join('') +
-            '<th class="scoreboard-unit-total" scope="col" rowspan="2">Unit Total</th>' +
-            '<th class="scoreboard-total" scope="col" rowspan="2">Total</th>' +
-          '</tr><tr>' + columns.map(function (column) {
-              return '<th class="scoreboard-category ' + categoryHeaderClass(column.category) +
-                (column.isItemEnd ? ' scoreboard-item-end' : '') + '" scope="col">' +
-                esc(column.category) + '</th>';
-          }).join('') + '</tr></thead><tbody>' +
-          rows.map(function (row) {
-            var parishCell = '';
-            var parishTotalCell = '';
-            var parishStart = !renderedParishes[row.parish];
-            if (parishStart) {
-              renderedParishes[row.parish] = true;
-              parishCell = '<th class="scoreboard-parish" scope="rowgroup" rowspan="' + parishCounts[row.parish] + '">' + esc(row.parish) + '</th>';
-              parishTotalCell = '<td class="scoreboard-total" rowspan="' + parishCounts[row.parish] + '">' +
-                parishTotals[row.parish] + '</td>';
-            }
-            return '<tr' + (parishStart ? ' class="scoreboard-parish-start"' : '') + '>' + parishCell +
-              '<td class="scoreboard-unit">' + esc(row.unit) + '</td>' +
-              columns.map(function (column) {
-                return '<td class="scoreboard-score' + (column.isItemEnd ? ' scoreboard-item-end' : '') + '">' +
-                  (row.scores[column.key] || 0) + '</td>';
-              }).join('') +
-              '<td class="scoreboard-unit-total">' + row.total + '</td>' +
-              parishTotalCell + '</tr>';
+    var table = '<div class="scoreboard-scroll" role="region" aria-label="Parish and unit score table" tabindex="0">' +
+      '<table class="scoreboard-table" aria-label="Score by parish, unit, competition and category">' +
+        '<thead><tr><th class="scoreboard-parish" scope="col" rowspan="2">Parish</th>' +
+          '<th class="scoreboard-unit" scope="col" rowspan="2">Unit</th>' +
+          groups.map(function (group) {
+            return '<th class="scoreboard-item-group scoreboard-item-end" scope="colgroup" colspan="' + group.columns.length + '">' + esc(group.name) + '</th>';
           }).join('') +
-        '</tbody></table></div>'
-      : emptyState('Parish and unit scores will appear here once configured.');
+          '<th class="scoreboard-unit-total" scope="col" rowspan="2">Unit Total</th>' +
+          '<th class="scoreboard-total" scope="col" rowspan="2">Total</th>' +
+        '</tr><tr>' + columns.map(function (column) {
+            return '<th class="scoreboard-category ' + categoryHeaderClass(column.category) +
+              (column.isItemEnd ? ' scoreboard-item-end' : '') + '" scope="col">' +
+              esc(column.category) + '</th>';
+        }).join('') + '</tr></thead><tbody>' +
+        rows.map(function (row) {
+          var parishCell = '';
+          var parishTotalCell = '';
+          var parishStart = !renderedParishes[row.parish];
+          if (parishStart) {
+            renderedParishes[row.parish] = true;
+            parishCell = '<th class="scoreboard-parish" scope="rowgroup" rowspan="' + parishCounts[row.parish] + '">' + esc(row.parish) + '</th>';
+            parishTotalCell = '<td class="scoreboard-total" rowspan="' + parishCounts[row.parish] + '">' +
+              parishTotals[row.parish] + '</td>';
+          }
+          return '<tr' + (parishStart ? ' class="scoreboard-parish-start"' : '') + '>' + parishCell +
+            '<td class="scoreboard-unit"><button class="scoreboard-unit-toggle" type="button" aria-expanded="false" title="' + esc(row.unit) + '">' + esc(row.unit) + '</button></td>' +
+            columns.map(function (column) {
+              return '<td class="scoreboard-score' + (column.isItemEnd ? ' scoreboard-item-end' : '') + '">' +
+                (row.scores[column.key] || 0) + '</td>';
+            }).join('') +
+            '<td class="scoreboard-unit-total">' + row.total + '</td>' +
+            parishTotalCell + '</tr>';
+        }).join('') +
+      '</tbody></table></div>';
     el('scoreboardTable').innerHTML = table;
+    var tableNode = el('scoreboardTable').querySelector('.scoreboard-table');
+    if (tableNode) {
+      tableNode.parentElement.onclick = function (event) {
+        var button = event.target.closest('.scoreboard-unit-toggle');
+        if (!button) return;
+        var expanded = button.classList.toggle('is-expanded');
+        button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      };
+    }
   }
 
   function scoreboardExportData() {

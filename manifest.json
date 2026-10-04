@@ -10,10 +10,10 @@
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "assets/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "assets/forane_logo.png",
+      "sizes": "1362x1155",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

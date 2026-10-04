@@ -138,6 +138,32 @@ main { padding: 14px 14px calc(88px + var(--safe-bottom)); max-width: 720px; mar
   white-space: nowrap;
   text-align: right;
 }
+.scoreboard-unit-toggle {
+  width: 100%;
+  min-width: 66px;
+  max-width: 110px;
+  padding: 4px 8px;
+  border: 1px solid rgba(148, 163, 184, .35);
+  border-radius: 999px;
+  background: rgba(148, 163, 184, .08);
+  color: var(--text);
+  font: inherit;
+  font-size: .72rem;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.scoreboard-unit-toggle.is-expanded {
+  white-space: normal;
+  overflow: visible;
+  max-width: 180px;
+  min-width: min(180px, 46vw);
+  word-break: break-word;
+  background: rgba(59, 130, 246, .12);
+  border-color: rgba(96, 165, 250, .6);
+}
 .scoreboard-table thead th { position: sticky; top: 0; z-index: 2; background: var(--surface-2); color: var(--text); }
 .scoreboard-table thead .scoreboard-parish, .scoreboard-table thead .scoreboard-unit { background: #1d4ed8; color: #eff6ff; text-align: center; }
 .scoreboard-table thead .scoreboard-item-group { background: #1d4ed8; color: #eff6ff; text-align: center; border-right: 2px solid #93c5fd; }
@@ -229,7 +255,13 @@ main { padding: 14px 14px calc(88px + var(--safe-bottom)); max-width: 720px; mar
   background: rgba(148, 163, 184, .08); border: 1px solid var(--line);
   font-size: .62rem; color: var(--muted);
 }
-.parish-unit-box span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.parish-unit-name {
+  flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: inherit;
+  font: inherit; text-align: left; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.parish-unit-name.is-expanded { white-space: normal; overflow: visible; word-break: break-word; }
+.parish-unit-box:has(.is-expanded) { grid-column: 1 / -1; }
 .parish-unit-box strong { color: var(--text); font-size: .7rem; }
 .podium-item[data-place="1"] {
   border-color: var(--gold);

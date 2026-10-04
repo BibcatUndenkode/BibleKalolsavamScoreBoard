@@ -1,12 +1,11 @@
 /* Offline cache for the score board shell. */
-var CACHE = 'kalolsavam-v62';
+var CACHE = 'kalolsavam-v67';
 var ASSETS = [
   './',
   './index.html',
   './assets/supabase.umd.js',
   './js/config.js',
   './manifest.json',
-  './assets/icon.svg',
   './assets/forane_logo.png',
   './css/styles.css',
   './js/store.js',
