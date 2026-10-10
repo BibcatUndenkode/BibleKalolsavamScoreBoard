@@ -1,5 +1,5 @@
 /* Offline cache for the score board shell. */
-var CACHE = 'kalolsavam-v67';
+var CACHE = 'kalolsavam-v68';
 var ASSETS = [
   './',
   './index.html',
@@ -29,14 +29,13 @@ self.addEventListener('activate', function (event) {
 
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
+  if (new URL(event.request.url).origin !== self.location.origin) return;
   if (event.request.url === self.location.origin + '/sw.js') return;
   event.respondWith(
     caches.match(event.request).then(function (cached) {
-      return cached || fetch(event.request).then(function (response) {
-        var copy = response.clone();
-        caches.open(CACHE).then(function (cache) { cache.put(event.request, copy); });
-        return response;
-      }).catch(function () { return caches.match('./index.html'); });
+      return cached || fetch(event.request).catch(function () {
+        return event.request.mode === 'navigate' ? caches.match('./index.html') : undefined;
+      });
     })
   );
 });

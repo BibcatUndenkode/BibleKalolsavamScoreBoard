@@ -190,6 +190,42 @@ main { padding: 14px 14px calc(88px + var(--safe-bottom)); max-width: 720px; mar
 .scoreboard-table tbody tr.scoreboard-parish-start > th,
 .scoreboard-table tbody tr.scoreboard-parish-start > td { border-top: 2px solid #0f766e; }
 .scoreboard-table tbody tr:last-child th, .scoreboard-table tbody tr:last-child td { border-bottom: 0; }
+.scoreboard-mobile { display: none; }
+
+@media (max-width: 767px) {
+  .scoreboard-scroll { display: none; }
+  .scoreboard-mobile { display: grid; gap: 14px; }
+  .scoreboard-mobile-parish { min-width: 0; }
+  .scoreboard-mobile-parish-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 8px 2px; border-bottom: 2px solid #0f766e;
+    color: #fbbf24; font-size: .8rem;
+  }
+  .scoreboard-mobile-parish-header h3 { min-width: 0; font-size: .9rem; overflow-wrap: anywhere; }
+  .scoreboard-mobile-parish-header span,
+  .scoreboard-mobile-unit-header span { flex: 0 0 auto; color: var(--muted); font-size: .72rem; }
+  .scoreboard-mobile-parish-header strong,
+  .scoreboard-mobile-unit-header strong { color: var(--text); font-size: .88rem; }
+  .scoreboard-mobile-unit {
+    margin-top: 8px; overflow: hidden; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--surface);
+  }
+  .scoreboard-mobile-unit-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 12px; background: var(--surface-2);
+  }
+  .scoreboard-mobile-unit-header h4 { min-width: 0; font-size: .86rem; overflow-wrap: anywhere; }
+  .scoreboard-mobile-scores { margin: 0; padding: 0; list-style: none; }
+  .scoreboard-mobile-score {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 8px 12px; border-top: 1px solid var(--line);
+  }
+  .scoreboard-mobile-label { display: grid; min-width: 0; gap: 2px; }
+  .scoreboard-mobile-label strong { font-size: .78rem; overflow-wrap: anywhere; }
+  .scoreboard-mobile-label small { color: var(--muted); font-size: .7rem; }
+  .scoreboard-mobile-points { flex: 0 0 auto; color: #a5f3fc; font-size: .9rem; }
+  .scoreboard-mobile-empty { margin: 0; padding: 10px 12px; color: var(--muted); font-size: .76rem; }
+}
 
 .link-btn {
   background: none; border: none; color: var(--brand);

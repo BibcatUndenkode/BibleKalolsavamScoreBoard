@@ -338,29 +338,31 @@
   /* ---------------- Parish & Sub-stations ---------------- */
   function renderStations() {
     var stations = Array.isArray(Store.data.stations) ? Store.data.stations : [];
-    var grouped = {};
-
-    stations.forEach(function (station) {
-      var parish = station.parish || 'Unknown Parish';
-      (grouped[parish] = grouped[parish] || { parish: parish, rows: [] }).rows.push(station);
-    });
-
-    var parishList = Object.keys(grouped).map(function (parish) {
-      var rows = grouped[parish].rows.slice().sort(function (a, b) { return (Number(a.no) || 0) - (Number(b.no) || 0); });
-      var total = rows.reduce(function (sum, row) { return sum + (Number(row.score) || 0); }, 0);
+    var parishList = Store.parishStandings().map(function (standing) {
+      var rows = standing.units.map(function (unit) {
+        var station = stations.find(function (entry) {
+          return (entry.parish || 'Unknown Parish') === standing.parish &&
+            (entry.substation || entry.name || '') === unit.unit;
+        });
+        return { no: station ? station.no : '', unit: unit.unit, points: unit.points };
+      }).sort(function (a, b) {
+        if (a.no === '') return b.no === '' ? a.unit.localeCompare(b.unit) : 1;
+        if (b.no === '') return -1;
+        return (Number(a.no) || 0) - (Number(b.no) || 0);
+      });
       return '<div class="card">' +
         '<div class="card-head">' +
           '<div style="flex:1;min-width:0">' +
-            '<div class="card-title station-parish">' + esc(parish) + '</div>' +
-            '<div class="card-sub">Total score: ' + total + '</div>' +
+            '<div class="card-title station-parish">' + esc(standing.parish) + '</div>' +
+            '<div class="card-sub">Total score: ' + standing.total + '</div>' +
           '</div>' +
           '<span class="badge">' + rows.length + ' units</span>' +
         '</div>' +
         '<div style="margin-top:8px">' + rows.map(function (row) {
           return '<div class="result-row">' +
             '<span class="station-number">' + esc(row.no || '') + '</span>' +
-            '<span class="who"><b class="station-substation">' + esc(row.substation || 'Sub-station') + '</b></span>' +
-            '<strong class="team-result-points">' + (Number(row.score) || 0) + ' pts</strong>' +
+            '<span class="who"><b class="station-substation">' + esc(row.unit || 'Sub-station') + '</b></span>' +
+            '<strong class="team-result-points">' + row.points + ' pts</strong>' +
           '</div>';
         }).join('') + '</div></div>';
     });
@@ -574,6 +576,34 @@
             parishTotalCell + '</tr>';
         }).join('') +
       '</tbody></table></div>';
+    var mobileParishes = [];
+    rows.forEach(function (row) {
+      var parish = mobileParishes[mobileParishes.length - 1];
+      if (!parish || parish.name !== row.parish) {
+        parish = { name: row.parish, rows: [] };
+        mobileParishes.push(parish);
+      }
+      parish.rows.push(row);
+    });
+    table += '<div class="scoreboard-mobile" aria-label="Parish and unit scores">' +
+      mobileParishes.map(function (parish) {
+        return '<section class="scoreboard-mobile-parish">' +
+          '<header class="scoreboard-mobile-parish-header"><h3>' + esc(parish.name) + '</h3>' +
+          '<span>Parish total <strong>' + parishTotals[parish.name] + '</strong></span></header>' +
+          parish.rows.map(function (row) {
+            var scores = columns.filter(function (column) {
+              return (row.scores[column.key] || 0) > 0;
+            }).map(function (column) {
+              return '<li class="scoreboard-mobile-score"><span class="scoreboard-mobile-label">' +
+                '<strong>' + esc(column.itemName) + '</strong><small>' + esc(column.category) + '</small></span>' +
+                '<strong class="scoreboard-mobile-points">' + row.scores[column.key] + '</strong></li>';
+            }).join('');
+            return '<article class="scoreboard-mobile-unit"><header class="scoreboard-mobile-unit-header">' +
+              '<h4>' + esc(row.unit) + '</h4><span>Unit total <strong>' + row.total + '</strong></span></header>' +
+              (scores ? '<ul class="scoreboard-mobile-scores">' + scores + '</ul>' :
+                '<p class="scoreboard-mobile-empty">No item scores</p>') + '</article>';
+          }).join('') + '</section>';
+      }).join('') + '</div>';
     el('scoreboardTable').innerHTML = table;
     var tableNode = el('scoreboardTable').querySelector('.scoreboard-table');
     if (tableNode) {

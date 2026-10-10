@@ -2,7 +2,7 @@
 (function (global) {
   'use strict';
 
-  var KEY = 'bible-kalolsavam-data-v1';
+  var LEGACY_DATA_KEY = 'bible-kalolsavam-data-v1';
   var SESSION_KEY = 'bible-kalolsavam-session';
   var DEFAULT_PASSWORD = 'kalolsavam';
 
@@ -188,14 +188,6 @@
     return supabaseClient;
   }
 
-  function persistLocal() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(data));
-    } catch (e) {
-      console.warn('Unable to persist data', e);
-    }
-  }
-
   function ensureExtraStages() {
     if (!data || !Array.isArray(data.stages) || data.stageSetupVersion >= 3) return false;
     seed().stages.slice(4).forEach(function (defaultStage) {
@@ -269,7 +261,6 @@
     data = remoteData;
     ensureExtraStages();
     ensureMalayalamNames();
-    persistLocal();
     global.dispatchEvent(new Event('kalolsavam-remote-update'));
   }
 
@@ -309,11 +300,9 @@
     isLoading = true;
     configureSupabase();
     try {
-      var raw = localStorage.getItem(KEY);
-      data = raw ? JSON.parse(raw) : seed();
-    } catch (e) {
-      data = seed();
-    }
+      localStorage.removeItem(LEGACY_DATA_KEY);
+    } catch (e) {}
+    data = seed();
     if (!data || !data.settings) data = seed();
     var catalogItems = splitItemsByCategory(seed().items).items;
     var savedItems = Array.isArray(data.items) ? data.items : [];
@@ -436,7 +425,6 @@
   }
 
   function save() {
-    persistLocal();
     if (isLoading || !supabaseClient || !remoteAdminSession) return;
     var ready = remoteLoadPromise;
     remoteSaveQueue = remoteSaveQueue.catch(function () { return false; })
@@ -552,7 +540,6 @@
       }).sort(function (a, b) { return a.points - b.points || a.unit.localeCompare(b.unit); });
       return { parish: parish.parish, total: parish.total, units: units };
     }).sort(function (a, b) { return b.total - a.total || a.parish.localeCompare(b.parish); });
-    if (!list.some(function (row) { return row.total > 0; })) return [];
     var rank = 0, previousTotal = null;
     list.forEach(function (row, index) {
       if (previousTotal === null || row.total !== previousTotal) {
